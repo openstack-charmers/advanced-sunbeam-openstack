@@ -21,6 +21,8 @@ import advanced_sunbeam_openstack.cprocess as sunbeam_cprocess
 
 import charms.nginx_ingress_integrator.v0.ingress as ingress
 import charms.mysql.v1.mysql as mysql
+import charms.sunbeam_rabbitmq_operator.v0.amqp as amqp
+
 
 import ops.charm
 import ops.framework
@@ -345,6 +347,43 @@ class DBHandler(RelationHandler):
         try:
             # Nothing to wait for
             return bool(self.interface.databases())
+        except AttributeError:
+            return False
+
+
+class AMQPHandler(RelationHandler):
+    def __init__(
+        self,
+        charm: ops.charm.CharmBase,
+        relation_name: str,
+        callback_f: Callable,
+        username: str,
+        vhost: int,
+    ):
+        self.username = username
+        self.vhost = vhost
+        super().__init__(charm, relation_name, callback_f)
+
+    def setup_event_handler(self) -> ops.charm.Object:
+        """Configure event handlers for an AMQP relation."""
+        logger.debug("Setting up AMQP event handler")
+        _amqp = amqp.AMQPRequires(
+            self.charm, self.relation_name, self.username, self.vhost
+        )
+        self.framework.observe(_amqp.on.ready, self._on_amqp_ready)
+        return _amqp
+
+    def _on_amqp_ready(self, event) -> None:
+        """Handles AMQP change events."""
+        # Ready is only emitted when the interface considers
+        # that the relation is complete (indicated by a password)
+        self.callback_f(event)
+
+    @property
+    def ready(self) -> bool:
+        """Handler ready for use."""
+        try:
+            return bool(self.interface.password)
         except AttributeError:
             return False
 

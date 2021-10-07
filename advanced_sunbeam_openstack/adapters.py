@@ -116,6 +116,35 @@ class AMQPAdapter(ops_openstack.adapters.OpenStackOperRelationAdapter):
         return bool(creds)
 
 
+class CephClientAdapter(ops_openstack.adapters.OpenStackOperRelationAdapter):
+
+    @property
+    def monitor_hosts(self) -> str:
+        """"Comma delimited list of Ceph MON hosts"""
+        return ",".join(
+            sorted(self.relation.get_relation_data().get("mon_hosts"))
+        )
+
+    @property
+    def auth(self) -> str:
+        """cephx authentication type"""
+        return self.relation.get_relation_data().get("auth")
+
+    @property
+    def key(self) -> str:
+        """cephx key"""
+        return self.relation.get_relation_data().get("key")
+
+    @property
+    def rbd_features(self) -> str:
+        return None
+
+    @property
+    def ready(self) -> bool:
+        """Determine when adapter is ready for use."""
+        return self.relation.pools_avaliable
+
+
 class OPSRelationAdapters():
 
     def __init__(self, charm):
@@ -153,7 +182,11 @@ class OPSRelationAdapters():
 
     @property
     def interface_map(self):
-        return {}
+        _map = {
+            'rabbitmq': AMQPAdapter,
+            'ceph-client': CephClientAdapter,
+        }
+        return _map
 
     @property
     def relation_map(self):
@@ -174,5 +207,6 @@ class APICharmAdapters(OPSRelationAdapters):
     def interface_map(self):
         _map = super().interface_map
         _map.update({
-            'mysql_datastore': DBAdapter})
+            'mysql_datastore': DBAdapter,
+        })
         return _map
