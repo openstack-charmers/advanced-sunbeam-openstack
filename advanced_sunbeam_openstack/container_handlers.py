@@ -184,6 +184,35 @@ class PebbleHandler(ops.charm.Object):
             if exception_on_error:
                 raise
 
+    def config_file_managed(self, config_path: str) -> bool:
+        """Check if config file is already in managed list."""
+        return config_path in [c.path for c in self.container_configs]
+
+    def add_container_config(
+        self,
+        container_config: sunbeam_core.ContainerConfigFile
+    ) -> None:
+        """Append a config file to the list managed by this handler."""
+        if not self.config_file_managed(container_config.path):
+            self.container_configs.append(container_config)
+
+    def remove_container_config(
+        self,
+        container_config: sunbeam_core.ContainerConfigFile
+    ) -> None:
+        """Remove a config file from the list managed by this handler."""
+        self.container_configs = [
+            c
+            for c in self.container_configs
+            if c.path != container_config.path]
+
+    def set_container_config(
+        self,
+        container_configs: List[sunbeam_core.ContainerConfigFile]
+    ) -> None:
+        """Overwrite the list of config files managed by this handler."""
+        self.container_configs = container_configs
+
 
 class ServicePebbleHandler(PebbleHandler):
     """Container handler for containers which manage a service."""
