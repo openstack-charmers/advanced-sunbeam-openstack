@@ -472,17 +472,15 @@ class OSBaseOperatorAPICharm(OSBaseOperatorCharm):
     @property
     def admin_url(self) -> str:
         """Url for accessing the admin endpoint for this service."""
-        hostname = self.model.get_binding(
-            "identity-service"
-        ).network.ingress_address
+        # Assumption: This charm is only for k8s?
+        hostname = self.app.name
         return self.service_url(hostname)
 
     @property
     def internal_url(self) -> str:
         """Url for accessing the internal endpoint for this service."""
-        hostname = self.model.get_binding(
-            "identity-service"
-        ).network.ingress_address
+        # Assumption: This charm is only for k8s?
+        hostname = self.app.name
         return self.service_url(hostname)
 
     def get_pebble_handlers(self) -> List[sunbeam_chandlers.PebbleHandler]:
