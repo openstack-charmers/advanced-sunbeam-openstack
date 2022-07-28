@@ -273,11 +273,15 @@ class OSBaseOperatorCharm(ops.charm.CharmBase):
         return True
 
     def relation_handlers_ready(self) -> bool:
-        """Determine whether all relations are ready for use."""
+        """Determine whether all mandatory relations are ready for use."""
+        optional_relations = ['ingress-internal', 'ingress-public']
         for handler in self.relation_handlers:
             if not handler.ready:
                 logger.info(f"Relation {handler.relation_name} incomplete")
-                return False
+                # TODO: Workaround to ignore optional relations
+                # https://github.com/canonical/operator/issues/799
+                if handler.relation_name not in optional_relations:
+                    return False
         return True
 
     def contexts(self) -> sunbeam_core.OPSCharmContexts:
